@@ -99,6 +99,9 @@ Two language-level generics changes. That's it.
 1. **Generic methods**
 2. **Generalized function type inference**
 
+(A third, unrelated change also shipped — struct literal
+field selectors. Not our topic for this talk.)
+
 No new constraint syntax. No generic type alias changes.
 Both are small in surface area, large in consequence.
 
@@ -107,6 +110,8 @@ Both are small in surface area, large in consequence.
 # Generic Methods: Before
 
 `examples/before/main.go` — reads inside-out
+
+`go run ./examples/before`
 
 ```go
 type List[E any] []E
@@ -169,16 +174,21 @@ func main() {
 
 # Stdlib Example: math/rand/v2
 
-**Before** — package-level generic function:
+**Before** — no method existed at all. Methods couldn't be
+generic, so `N` only worked on the package's global source:
 
 ```go
-func N[Int intType](r *Rand, n Int) Int
+func N[Int intType](n Int) Int
+rand.N[int](10) // always the global Rand
 ```
 
-**After** — a generic method:
+Your own seeded `*Rand`? No generic `N` for it.
+
+**After** — a real generic method, on any `*Rand`:
 
 ```go
-func (*Rand) N[Int intType](n Int) Int
+func (r *Rand) N[Int intType](n Int) Int
+myRand.N[int](10) // your seed, your instance
 ```
 
 ---
@@ -274,9 +284,8 @@ Generic interface methods — still no.
 Go 1.18: methods exist mainly as an
 **interface-implementation mechanism**.
 
-Go 1.27: methods are also an
-**organizational tool** — useful even when they'll
-never satisfy an interface.
+> "If one views methods also as an organizational tool,
+> then Go 1.18's reasoning appears overly restrictive."
 
 — Mark Freeman, go.dev/blog/generic-methods
 
