@@ -37,11 +37,10 @@ That's the talk.
 # Agenda
 
 - Where generics started (Go 1.18)
-- The quiet years (1.19 → 1.26)
+- Generics over the years (1.19 → 1.26)
 - What changed in Go 1.27
 - Generic methods, in depth
-- Why generic *interface* methods still can't —
-  the separate compilation problem, from the Go blog
+- Why generic *interface* methods still can't
 - Generalized function type inference
 - Performance: why this is "free"
 - Recap & discussion
@@ -53,7 +52,6 @@ That's the talk.
 - Type parameters on **functions and types**
 - `any` (alias for `interface{}`), `comparable`
 - Constraints: unions (`int | float64`), approximation (`~string`)
-- "Core type" concept governs what ops are legal
 
 ```go
 func Foo[T any](x T) T { return x }
@@ -65,7 +63,7 @@ seen what generic methods actually look like.
 
 ---
 
-# The Quiet Years (2023 → 2026)
+# Generics Over The Years (2023 → 2026)
 
 Generics didn't stand still — just nothing anyone
 was actually asking for:
@@ -73,22 +71,9 @@ was actually asking for:
 - **1.21** — stdlib catches up: `slices`, `maps`, `cmp`
 - **1.23** — iterators: range-over-func, `iter.Seq`
 - **1.24** — generic type aliases finally work
-- **1.25** — "core types" quietly removed from the spec
-  (a leak in the 1.18 abstraction, fixed)
 - **1.26** — self-referential type parameters
 
 Useful. Incremental. Not the big ask.
-
----
-
-# What Everyone Was Actually Asking For
-
-Proposal **#49085** — "allow type parameters in methods"
-
-Filed October 2021.
-900+ 👍 reactions.
-
-Rejected. For four years.
 
 ---
 
@@ -291,18 +276,23 @@ Go 1.18: methods exist mainly as an
 
 ---
 
-# Proposal History
+# Switching Gears
 
-- `#49085` (2021) — rejected, "generic interface
-  methods look impractical, so why bother at all"
-- `#77273` (Jan 2026) — Robert Griesemer reopens it,
-  separates the interface question from the
-  organizational-code-reuse question
-- Accepted. Shipped in Go 1.27.
+That's generic methods — one of Go 1.27's two
+language changes.
+
+The second is smaller, quieter, and has nothing
+to do with methods: **generalized function type
+inference**.
 
 ---
 
 # Function Type Inference: The Old Gaps
+
+```go
+func g[T any](v T) T { return v }
+type IntFormatter func(int) string
+```
 
 Worked since Go 1.21 — but only in some contexts:
 
@@ -385,3 +375,26 @@ or is it a scoped, overdue fix to a four-year-old gap?
 # Thanks, GoWroc
 
 Questions?
+
+
+Slides:
+
+```
+█ ▄▄▄▄▄ █▀█ █▄▀▀▀ █ ▄▄█ ▄▄▄▄▄ █
+█ █   █ █▀▀▀█ ▀ ▄▄▀█▄▄█ █   █ █
+█ █▄▄▄█ █▀ █▀▀█▀▀▀▀▀▄ █ █▄▄▄█ █
+█▄▄▄▄▄▄▄█▄▀ ▀▄█ █ █ █▄█▄▄▄▄▄▄▄█
+█▄▄▄ ▄▀▄  ▄▀▄▀ ▄▄▄ ▀▀▀▄▀ ▀▄█▄▀█
+█▀▄█▄█ ▄█ █▄█▀▄▄▄██▀▀████▄▀█▀██
+█   ▀  ▄█▄▄▄█▄▄▄▄▄ ▀▀ ▀▀▀▀▄▄█▀█
+█▀▄  ▀█▄  ▄  ▄█  ▄▄█▀  ▀▀ ▄▄▀██
+█▀▄ ▀▄ ▄█▀ █▄▀▄ ▄▄▄█ █ ▀ ▀▄ █▀█
+█ █▀▄█ ▄▄█▄▄█▀▄█▄ █ █ ▀ ▄▄█▄▀██
+█▄██▄▄▄▄█ ▄▄█▄ ▄█▀▄▀▄ ▄▄▄ ▀   █
+█ ▄▄▄▄▄ █▄   ▄█▀▄ ██  █▄█ ▄▄▀██
+█ █   █ █ ██▄ ▄▄▄▀▄█▀ ▄▄▄▄▀ ▀ █
+█ █▄▄▄█ █ █▀▀▀▄▀▄ ▄▄▄  ▄ ▄ ▄ ██
+█▄▄▄▄▄▄▄█▄█▄██▄▄██▄▄▄██▄▄▄█▄███
+```
+
+github.com/rafarlopes/go127-generics
