@@ -79,16 +79,10 @@ type Ordered[T Ordered[T]] interface { Less(T) bool }
 
 # Go 1.27 — August 19, 2026
 
-Two language-level generics changes. That's it.
+Two generics changes:
 
 1. **Generic methods**
 2. **Generalized function type inference**
-
-(A third, unrelated change also shipped — struct literal
-field selectors. Not our topic for this talk.)
-
-No new constraint syntax. No generic type alias changes.
-Both are small in surface area, large in consequence.
 
 ---
 
