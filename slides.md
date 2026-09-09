@@ -196,22 +196,22 @@ One method. One compiled body. Done.
 
 ---
 
-# Now Make `Balance` Generic
+# Now Add A Generic Method
 
 ```go
-type Wallet struct{}
-func (Wallet) Convert[C any]() C { /* ... */ }
+type Store struct{ /* ... */ }
+func (Store) Get[T any](key string) T { /* ... */ }
 
-type Converter interface { Convert[C any]() C }
-func Report(c Converter) { c.Convert[USD]() }   // ← but could be Convert[EUR]? Convert[GBP]?
+type Getter interface { Get[T any](key string) T }
+func Report(g Getter) { g.Get[User]("u:42") }   // ← but could be Get[Order]? Get[Invoice]?
 ```
 
-`billing` decides the type argument. `Wallet`'s package
+`billing` decides the type argument. `Store`'s package
 doesn't know it. To stay safe, the compiler would need
 to pre-generate **every possible instantiation**:
 
 ```text
-Wallet.Convert[USD]   Wallet.Convert[EUR]   Wallet.Convert[GBP]   ...
+Store.Get[User]   Store.Get[Order]   Store.Get[Invoice]   ...
 ```
 
 Unbounded. Impractical. That's the wall.
