@@ -12,15 +12,7 @@ GoWroc #64
 
 ---
 
-# The FAQ Said It Best
-
-> "We do not anticipate that Go will ever add generic methods."
-
-— Go FAQ, for most of the last decade
-
----
-
-# Then, Go 1.27 Shipped This
+# Go 1.27 Shipped This
 
 ```go
 func (List[E]) Map[R any](f func(E) R) List[R] {
@@ -30,8 +22,6 @@ func (List[E]) Map[R any](f func(E) R) List[R] {
 list.Map(add(2)).Map(divideBy(2))
 ```
 
-That's the talk.
-
 ---
 
 # Agenda
@@ -40,7 +30,7 @@ That's the talk.
 - Generics over the years (1.19 → 1.26)
 - What changed in Go 1.27
 - Generic methods, in depth
-- Why generic *interface* methods still can't
+- Why we cannot still use generic *interface* methods
 - Generalized function type inference
 - Performance: why this is "free"
 - Recap & discussion
@@ -51,7 +41,7 @@ That's the talk.
 
 - Type parameters on **functions and types**
 - `any` (alias for `interface{}`), `comparable`
-- Constraints: unions (`int | float64`), approximation (`~string`)
+- Type Constraints: `int | float64`, `~string`
 
 ```go
 func Foo[T any](x T) T { return x }
@@ -65,15 +55,25 @@ seen what generic methods actually look like.
 
 # Generics Over The Years (2023 → 2026)
 
-Generics didn't stand still — just nothing anyone
-was actually asking for:
-
 - **1.21** — stdlib catches up: `slices`, `maps`, `cmp`
-- **1.23** — iterators: range-over-func, `iter.Seq`
-- **1.24** — generic type aliases finally work
-- **1.26** — self-referential type parameters
+```go
+slices.Contains(s, x)
+```
 
-Useful. Incremental. Not the big ask.
+- **1.23** — iterators: range-over-func, `iter.Seq`
+```go
+for v := range slices.Values(s)
+```
+
+- **1.24** — generic type aliases finally work
+```go
+type Set[T comparable] = map[T]struct{}
+```
+
+- **1.26** — self-referential type parameters
+```go
+type Ordered[T Ordered[T]] interface { Less(T) bool }
+```
 
 ---
 
@@ -157,24 +157,41 @@ func main() {
 
 ---
 
-# Stdlib Example: math/rand/v2
+# Another Shape: Result[T]
 
-**Before** — no method existed at all. Methods couldn't be
-generic, so `N` only worked on the package's global source:
+`examples/result/main.go`
 
-```go
-func N[Int intType](n Int) Int
-rand.N[int](10) // always the global Rand
-```
-
-Your own seeded `*Rand`? No generic `N` for it.
-
-**After** — a real generic method, on any `*Rand`:
+**Before** — mapping a `Result[T]` to a `Result[R]` needed
+a helper function, because `Map` couldn't carry its own `R`:
 
 ```go
-func (r *Rand) N[Int intType](n Int) Int
-myRand.N[int](10) // your seed, your instance
+func MapResult[T, R any](r Result[T], f func(T) (R, error)) Result[R] {
+    if r.err != nil {
+        return Result[R]{err: r.err}
+    }
+    out, err := f(r.val)
+    return Result[R]{val: out, err: err}
+}
+
+parsed := MapResult(MapResult(Parse("21"), strconv.Atoi), double)
 ```
+
+**After** — `Map` is a generic method, so validation and
+parsing pipelines read left to right:
+
+```go
+func (r Result[T]) Map[R any](f func(T) (R, error)) Result[R] {
+    if r.err != nil {
+        return Result[R]{err: r.err}
+    }
+    out, err := f(r.val)
+    return Result[R]{val: out, err: err}
+}
+
+parsed := Parse("21").Map(strconv.Atoi).Map(double)
+```
+
+`go run ./examples/result`
 
 ---
 
