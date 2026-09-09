@@ -157,44 +157,6 @@ func main() {
 
 ---
 
-# Another Shape: Result[T]
-
-`examples/result/main.go`
-
-**Before** — mapping a `Result[T]` to a `Result[R]` needed
-a helper function, because `Map` couldn't carry its own `R`:
-
-```go
-func MapResult[T, R any](r Result[T], f func(T) (R, error)) Result[R] {
-    if r.err != nil {
-        return Result[R]{err: r.err}
-    }
-    out, err := f(r.val)
-    return Result[R]{val: out, err: err}
-}
-
-parsed := MapResult(MapResult(Parse("21"), strconv.Atoi), double)
-```
-
-**After** — `Map` is a generic method, so validation and
-parsing pipelines read left to right:
-
-```go
-func (r Result[T]) Map[R any](f func(T) (R, error)) Result[R] {
-    if r.err != nil {
-        return Result[R]{err: r.err}
-    }
-    out, err := f(r.val)
-    return Result[R]{val: out, err: err}
-}
-
-parsed := Parse("21").Map(strconv.Atoi).Map(double)
-```
-
-`go run ./examples/result`
-
----
-
 # So Why Was This Excluded Until Now?
 
 Time to answer the question from the 1.18 slide.
@@ -202,19 +164,21 @@ Time to answer the question from the 1.18 slide.
 Two packages, one interface:
 
 ```text
- package main              package p
- ───────────────           ─────────────────────
- type T struct{}           type I interface { M() }
- func (T) M() {...}        func F(i I) { i.M() }
+ package main                    package billing
+ ───────────────                 ─────────────────────────────
+ type Wallet struct{}            type Balancer interface { Balance() int }
+ func (Wallet) Balance() int     func Report(b Balancer) { b.Balance() }
+ {...}
 
- main() { p.F(T{}) } ────► F(i I)
-                              │
-                           i.M()  ── routed to T.M
-                                     at runtime
+ main() { billing.Report(Wallet{}) } ────► Report(b Balancer)
+                                                │
+                                             b.Balance()  ── routed to
+                                                             Wallet.Balance
+                                                             at runtime
 ```
 
-Compiled **separately**. Package `p` never sees `T`.
-It only knows "something implementing `I`" arrives.
+Compiled **separately**. Package `billing` never sees `Wallet`.
+It only knows "something implementing `Balancer`" arrives.
 
 *Source: go.dev/blog/generic-methods,
 "The trouble with generic interface methods"*
@@ -223,37 +187,37 @@ It only knows "something implementing `I`" arrives.
 
 # Non-Generic Methods: Easy Mode
 
-`p` can't know how it will use `T{}` — so Go doesn't
-try to guess. It just compiles **every** method of `T`
-the moment `T` is declared.
+`billing` can't know how it will use `Wallet{}` — so Go
+doesn't try to guess. It just compiles **every** method
+of `Wallet` the moment `Wallet` is declared.
 
 ```text
-   declare T  ──►  compile T.M (and all its methods)
-                        │
+   declare Wallet  ──►  compile Wallet.Balance (and all its methods)
+                             │
               guaranteed to exist at runtime,
-              no matter what p.F does with it
+              no matter what billing.Report does with it
 ```
 
 One method. One compiled body. Done.
 
 ---
 
-# Now Make `M` Generic
+# Now Make `Balance` Generic
 
 ```go
-type T struct{}
-func (T) M[P any]() { /* ... */ }
+type Wallet struct{}
+func (Wallet) Convert[C any]() C { /* ... */ }
 
-type I interface { M[P any]() }
-func F(i I) { i.M[int]() }   // ← but could be M[string]? M[Foo]?
+type Converter interface { Convert[C any]() C }
+func Report(c Converter) { c.Convert[USD]() }   // ← but could be Convert[EUR]? Convert[GBP]?
 ```
 
-`p` decides the type argument. `T`'s package doesn't
-know it. To stay safe, the compiler would need to
-pre-generate **every possible instantiation**:
+`billing` decides the type argument. `Wallet`'s package
+doesn't know it. To stay safe, the compiler would need
+to pre-generate **every possible instantiation**:
 
 ```text
-T.M[int]   T.M[string]   T.M[Foo]   T.M[...]   ...
+Wallet.Convert[USD]   Wallet.Convert[EUR]   Wallet.Convert[GBP]   ...
 ```
 
 Unbounded. Impractical. That's the wall.
