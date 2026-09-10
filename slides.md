@@ -18,8 +18,9 @@ GoWroc #64
 - Generics over the years (1.19 → 1.26)
 - What changed in Go 1.27
 - Generic methods
-- Why we cannot still use generic *interface* methods
-- Why this is "free"
+    - Before and after
+    - Why we cannot still use generic *interface* methods
+    - Why this is "free"
 - Generalized function type inference
 - Discussion & Questions
 
