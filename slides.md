@@ -12,28 +12,16 @@ GoWroc #64
 
 ---
 
-# Go 1.27 Shipped This
-
-```go
-func (List[E]) Map[R any](f func(E) R) List[R] {
-    // ...
-}
-
-list.Map(add(2)).Map(divideBy(2))
-```
-
----
-
 # Agenda
 
 - Where generics started (Go 1.18)
 - Generics over the years (1.19 → 1.26)
 - What changed in Go 1.27
-- Generic methods, in depth
+- Generic methods
 - Why we cannot still use generic *interface* methods
+- Why this is "free"
 - Generalized function type inference
-- Performance: why this is "free"
-- Recap & discussion
+- Discussion & Questions
 
 ---
 
@@ -251,6 +239,18 @@ Go 1.18: methods exist mainly as an
 
 ---
 
+# Why This Is "Free"
+
+A generic method call on a concrete type is resolved
+**statically, at compile time** — the compiler knows
+the receiver's type and the type argument, so it
+generates the same kind of call it always did.
+
+Theoretically: no runtime cost beyond what generics
+already cost before 1.27.
+
+---
+
 # Switching Gears
 
 That's generic methods — one of Go 1.27's two
@@ -312,38 +312,9 @@ meets a concrete function type.
 
 ---
 
-# Performance: Why This Is "Free"
-
-A generic method call on a concrete type is resolved
-**statically, at compile time** — the compiler knows
-the receiver's type and the type argument, so it
-generates the same kind of call it always did.
-
-No interface, no itable, no runtime type resolution
-involved.
-
-Theoretically: no runtime cost beyond what generics
-already cost before 1.27.
-
----
-
-# Recap
-
-- Go 1.27 shipped **two** generics changes
-- Generic methods: real method chaining, four years
-  in the making
-- Interfaces still can't have generic methods —
-  that limitation is unchanged, and deliberate
-- Function type inference: one consistent rule instead
-  of a patchwork of special cases
-
----
-
 # Discussion
 
-Does this move Go toward Rust/Java-level complexity —
-
-or is it a scoped, overdue fix to a four-year-old gap?
+Does this move Go toward Rust/Java-level complexity or is it a scoped overdue fix?
 
 ---
 
